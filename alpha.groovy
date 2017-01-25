@@ -18,17 +18,13 @@ List getAdbClients(){
       offsetReached = true
     }
   }
-
-  //def myBookList = [myBook,myBook2,myBook3]
-
-  //def jsonBuilder = new groovy.json.JsonBuilder()
-  //jsonBuilder(devices: adbClients)
-
-  //println jsonBuilder
   return adbClients
 }
 
-def test = getAdbClients()
-// that's it :)
-println test[0].state
-println test[0].serial
+getAdbClients().each {
+
+  println it.serial
+    println it.isCharging()
+    println it.getBatteryCapacity()
+
+}
