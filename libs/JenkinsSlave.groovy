@@ -3,11 +3,10 @@ import groovy.json.JsonSlurper
 
 class JenkinsSlave {
 
-  private final String jenkinsHost
-  private final String jnlpUrl
-  private final String slaveName
-  private final String secret
-  private final String serial
+  String hostUrl  // config (setup jsm_host)
+  String name     // userContent (dynamically via Jenkins job)
+  String secret   // userContent (dynamically via Jenkins job)
+  String serial   // adb
 
   private UNIXProcess process
 
@@ -18,10 +17,11 @@ class JenkinsSlave {
     Date date = new Date().format('yyyy-MM-dd_hh:mm:ss')
 
     this.process = """
-      java -jar slave.jar
-         -slaveLog ./logs/slaves/${date}_${this.slaveName}.${this.serial}.log
-         -jnlpUrl ${this.jnlpUrl}
-         -secret ${this.secret}
+      java -Dhudson.remoting.Launcher.pingIntervalSec=-1
+        -jar slave.jar
+        -slaveLog ./logs/slaves/${date}_${this.name}.${this.serial}.log
+        -jnlpUrl "${this.hostUrl}/computer/${this.name}/slave-agent.jnlp
+        -secret ${this.secret}
     """.stripIndent().execute()
 
     sleep(3000)
@@ -36,44 +36,52 @@ class JenkinsSlave {
 
   // is'es methods
   boolean isOnline() {
-    // this.getJson("offline").offline one line, if getJson works :D
-    String url = "${this.jenkinsHost}/computer/${this.slavName}/api/json?tree=offline"
+    this.getJson("offline").offline
+    /*
+    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=offline"
     def jsonResp = new JsonSlurper().parseText(url.toURL().getText())
     !jsonResp.offline
+    */
   }
 
 
   // returns null (as String) or the reason why user disconnected slave
   String isManuallyDisconnected() {
-    String url = "${this.jenkinsHost}/computer/${this.slavName}/api/json?tree=offlineCause[description]"
+    /*
+    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=offlineCause[description]"
     def jsonResp = new JsonSlurper().parseText(url.toURL().getText())
+    */
+    def jsonResp = this.getJson("offlineCause[description]")
     if(!jsonResp.offlineCause) { return null }
     jsonResp.offlineCause.description
   }
 
   boolean isBuilding() {
-    // this.getJson("executors[idle]").idle one line, if getJson works :D
-    String url = "${this.jenkinsHost}/computer/${this.slavName}/api/json?tree=executors[idle]"
+    this.getJson("executors[idle]").idle
+    /*
+    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=executors[idle]"
     def jsonResp = new JsonSlurper().parseText(url.toURL().getText())
     jsonResp.idle
+    */
   }
 
   // have to try it, but will make the two methods smaller!
   def getJson(String query) {
-    String url = "${this.jenkinsHost}/computer/${this.slavName}/api/json?tree=${query}"
+    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=${query}"
     new JsonSlurper().parseText(url.toURL().getText())
   }
 
+  /* probably not needed!
   // setter methods
-  void setJenkinsHost(String host) {
-    this.jenkinsHost = host
+  void sethostUrl(String host) {
+    this.hostUrl = host
   }
 
   void setJnlpUrl(String jnlpUrl) {
     this.jnlpUrl = jnlpUrl
   }
 
-  void setSlaveName(String serial) {
+  void setname(String serial) {
     this.serial = serial
   }
 
@@ -84,5 +92,6 @@ class JenkinsSlave {
   void setSerial(String serial) {
     this.serial = serial
   }
+  */
 
 }
