@@ -11,9 +11,11 @@ List getAdbClients(){
 
   adbDevices.each {
     if (offsetReached) {
+      // transformation from String to List
       it = it.split('\t')
       adbClients.add(new AndroidDevice(serial: it[0], state: it[1]))
     }
+    // trigger if
     if (!offsetReached && it.equals("List of devices attached ")) {
       offsetReached = true
     }

@@ -12,22 +12,7 @@ class AndroidDevice {
   UNIXProcess process
 
 
-  // extract method! into own class Jenkins slave
-  /***** Jenkins slave methods****/
-  UNIXProcess startSlave() {
-    // sanity check whether log dir is accessible
-    assertTrue new File(./slaveLogs).isAccessible()
 
-    return """java -jar slave.jar
-                   -slaveLog ./slaveLogs/date.${slaveName}.${serial}.log
-                   -jnlpUrl ${jnlpUrl}
-                   -secret""".execute()
-    // process.destroy() <- to kill!
-  }
-
-  void killSlave() {
-    this.process.destroy()
-  }
 
   /***** Android  ******/
   int getBatteryCapacity() {
@@ -40,15 +25,46 @@ class AndroidDevice {
       .execute().text.trim()
   }
 
-  boolean pingGoogle() {
+  boolean isConnectedViaWiFi() {
 
   }
 
-  boolean isAirplaneModeOn() {
+  boolean isConnectedToWWW() {
 
+  }
+
+  boolean ping(String address) {
+
+    List pingOutput = "adb -s ${this.serial} shell ping -c 5 ${address}"
+      .execute().text.trim().split('\n')
+
+
+    return true
+  }
+
+  boolean isAirplaneModeOn() {
+    def aiplaneMode = Integer.valueOf(
+      "adb -s ${this.serial} shell settings get global airplane_mode_on"
+      .execute().text.trim())
+
+    airplaneMode > 0
   }
 
   boolean setAirplaneMode() {
 
   }
+
+  boolean setWifiMode() {
+
+  }
+
+  String getSSID(){
+    def output = "adb shell dumpsys netstats | grep -E 'iface=wlan.*networkId'"
+      .execute().text.trim()
+
+    output.substring()
+  }
+
+  // rooted would could use these things:
+  // adb shell su -c 'svc wifi disable'
 }
