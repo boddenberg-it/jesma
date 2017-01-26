@@ -4,7 +4,6 @@ class AndroidDevice {
   // RaspberryPi only
   int powerGpio
   JenkinsSlave slave
-  String adbState
   String serial
 
   /***** Android  ******/
