@@ -31,31 +31,28 @@ class AndroidDevice {
 		this.adb("am force-stop com.android.settings")
   }
 
-
+  String getSSID() {
+    String output = this.adb("dumpsys netstats").split("networkId=\"")[1]
+    output.split("\"")[0]
+  }
 
   String adb(String command) {
     "adb -s ${this.serial} shell ${command}".execute().text.trim()
   }
 
   // above methods are "tested"
-  
+
   // rooted would could use these things:
   // adbShell shell su -c 'svc wifi disable'
 
+  // TODO: focus on the jenkins slave!
 
-  boolean setWifiMode() {
+    boolean toggleCharging() {
 
-  }
+    }
 
-  String getSSID() {
-    def output = this.adb("dumpsys netstats | grep -E 'iface=wlan.*networkId'")
-
-
-  }
-
-
-    boolean isConnectedViaWiFi() {
-
+    boolean gotInetConnection() {
+        this.ping()
     }
 
     boolean ping(String address) {
