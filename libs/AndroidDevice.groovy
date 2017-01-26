@@ -3,68 +3,63 @@
 class AndroidDevice {
   // RaspberryPi only
   int powerGpio
-
+  JenkinsSlave slave
+  String adbState
   String serial
-  String state
-
-  String slaveName
-  String jnlpUrl
-  UNIXProcess process
-
-
-
 
   /***** Android  ******/
   int getBatteryCapacity() {
-    return Integer.parseInt("adb -s ${this.serial} shell cat /sys/class/power_supply/battery/capacity"
-      .execute().text.trim())
+    return Integer.parseInt(this.adb("cat /sys/class/power_supply/battery/capacity"))
   }
 
-  String isCharging(){
-    return "adb -s ${this.serial} shell cat /sys/class/power_supply/battery/status"
-      .execute().text.trim()
-  }
-
-  boolean isConnectedViaWiFi() {
-
-  }
-
-  boolean isConnectedToWWW() {
-
-  }
-
-  boolean ping(String address) {
-
-    List pingOutput = "adb -s ${this.serial} shell ping -c 5 ${address}"
-      .execute().text.trim().split('\n')
-
-
-    return true
+  boolean isCharging(){
+    String output = this.adb("cat /sys/class/power_supply/battery/status")
+    output.equals("Charging") || output.equals("Full")
   }
 
   boolean isAirplaneModeOn() {
-    def aiplaneMode = Integer.valueOf(
-      "adb -s ${this.serial} shell settings get global airplane_mode_on"
-      .execute().text.trim())
-
-    airplaneMode > 0
+    this.adb("settings get global airplane_mode_on").equals("1")
   }
 
-  boolean setAirplaneMode() {
-
+  void toggleAirplaneMode() {
+    this.adb("am start -a android.settings.AIRPLANE_MODE_SETTINGS")
+    sleep(1000)
+    this.adb("input keyevent 19")
+    sleep(1000)
+    this.adb("input keyevent 23")
+    sleep(100)
+		this.adb("am force-stop com.android.settings")
   }
+
+
+
+  String adb(String command) {
+    "adb -s ${this.serial} shell ${command}".execute().text.trim()
+  }
+
+  // above methods are "tested"
+  
+  // rooted would could use these things:
+  // adbShell shell su -c 'svc wifi disable'
+
 
   boolean setWifiMode() {
 
   }
 
-  String getSSID(){
-    def output = "adb shell dumpsys netstats | grep -E 'iface=wlan.*networkId'"
-      .execute().text.trim()
+  String getSSID() {
+    def output = this.adb("dumpsys netstats | grep -E 'iface=wlan.*networkId'")
 
-    output.substring()
+
   }
 
-  // rooted would could use these things:
-  // adb shell su -c 'svc wifi disable'
+
+    boolean isConnectedViaWiFi() {
+
+    }
+
+    boolean ping(String address) {
+      List pingOutput = this.adb(" ping -c 5 ${address}").split('\n')
+      return true
+    }
 }
