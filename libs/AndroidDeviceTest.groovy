@@ -25,10 +25,9 @@ getAdbClients().each {
     println it.getBatteryCapacity()
     println it.getSSID()
     println it.isAirplaneModeOn()
-//    println "toggleAirplaneMode"
-//    it.toggleAirplaneMode()
-//    println it.isAirplaneModeOn()
-//    println it.getSSID()
+    it.toggleAirplaneMode()
+    println it.isAirplaneModeOn()
+    println it.getSSID()
     println it.isWiFiConnected()
     println it.isDeviceUsable()
 }
