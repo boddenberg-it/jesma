@@ -1,28 +1,22 @@
-String configJson = "{ \"jsm_clients\": "
+String configJson = "{ \"jsm_clients\": [\n"
 
-Node node = Jenkins.instance.slaves.find { it.name == "jsmc_testSlave" }
+//Node node = jenkins.model.Jenkins.instance.slaves.find { it.name == "jsmc_testSlave" }
 
+for ( node in jenkins.model.Jenkins.instance.slaves) {
+
+props = node.nodeProperties.envVars
 
 configJson += """{
                 "name": "${node.name}",
-				"host": "host...Ahaaa",
                 "mode": "${node.mode}",
                 "remoteFS":  "${node.remoteFS}",
                 "executors": "${node.numExecutors}",
                 "jnlp_secret": "${node.getComputer().getJnlpMac()}",
-                "jsmc_json": ${node.nodeProperties.envVars.jsmc_json[0]}
-			  },""".stripIndent()
-
+		"adb_serial": "${props.ANDROID_SERIAL[0]}",
+                "jsmc_json": ${props.jsmc_json[0]}
+              },""".stripIndent()
+}
 // close JSON
-configJson = configJson.substring(0,configJson.lastIndexOf(','))
-configJson += "}"
-
-/*
-this is how the "jsmc_json" "environment variable"
-looks like in the "Node Properties" of the slave ->
-
-{"AndroidDevice": {"name": "jsmc_testSlave"}}
-
-pretty much JSON :)
-
-*/
+configJson = configJson.substring(0, configJson.lastIndexOf(','))
+configJson += "\n]}"
+println configJson
