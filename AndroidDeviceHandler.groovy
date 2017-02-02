@@ -2,27 +2,24 @@
 /**
 *
 */
-
 class AndroidDeviceHandlerFoo {
 
-  List AndroidDevices
+  List androidDevices
   List serials
   List previousSerials
 
 // maybe parse State directly to avoid shitload of adb devices calls.... (yeah)
-  List getSerials() {
+  List readSerials() {
 
-    List serials
+    boolean offsetReached = false;
+
+    List serials = []
     List adbDevices = "adb devices".execute().text.split('\n')
 
     adbDevices.each {
-
       if (offsetReached) {
-        it = it.split('\t')
-        serials.add(it[0])
-      }
-
-      if (!offsetReached && it.equals("List of devices attached ")) {
+        serials.add(it.split('\t')[0])
+      } else if (it.equals("List of devices attached ")) {
         offsetReached = true
       }
     }
@@ -32,10 +29,59 @@ class AndroidDeviceHandlerFoo {
 
 void updateSerials() {
   this.previousSerials = this.serials
-  this.serials = getSerials()
+  this.serials = readSerials()
+}
+
+void init() {
+  this.serials.each() {
+    createAndroidSlave(it)
+  }
+}
+
+void createAndroidSlave(){
+  // get specific information from fetched config File
+  // instanciate AndroidDevice + its inner JenkinsSlave object and that's should it be.
+  // Then every round only all AndroidDevices has to be checked according to JSON configuration!
+}
+
+void checkDeviceConnections() {
+
+  updateSerials()
+
+  if (!previousSerials) { init(); return }
+
+  // check existing slave instances
+  androidDevices.each() { -> androidDevice
+    if (!serials.contains(androidDevice.serial)) {
+      androidDevice.slave.kill()
+      androidDevices.removeAll {
+        it.serial.equals(androidDevice.serial)
+      }
+    }
+  }
+
+  // check if new AndroidDevices must be added, because new device has been added
+  serials.each() {
+    if (!this.previousSerials.contains(it)) { createAndroidSlave(it) }
+  }
 }
 
 }
+
+
+
+
+}
+
+def foo = new AndroidDeviceHandlerFoo()
+
+
+foo.updateSerials()
+println foo.serials != null
+println foo.previousSerials
+foo.updateSerials()
+println foo.serials
+println foo.previousSerials
 
 
 /*

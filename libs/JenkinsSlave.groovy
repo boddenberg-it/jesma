@@ -10,7 +10,7 @@ class JenkinsSlave {
 
   private UNIXProcess process
 
-  boolean startSlave() {
+  boolean start() {
     // sanity check whether log dir is accessible
     //assertTrue new File(./slaveLogs).isAccessible()
 
@@ -28,7 +28,7 @@ class JenkinsSlave {
     this.isOnline()
   }
 
-  boolean killSlave() {
+  boolean kill() {
     this.process.destroy()
     sleep(3000)
     !this.isOnline()
@@ -37,20 +37,11 @@ class JenkinsSlave {
   // is'es methods
   boolean isOnline() {
     this.getJson("offline").offline
-    /*
-    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=offline"
-    def jsonResp = new JsonSlurper().parseText(url.toURL().getText())
-    !jsonResp.offline
-    */
   }
 
 
   // returns null (as String) or the reason why user disconnected slave
   String isManuallyDisconnected() {
-    /*
-    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=offlineCause[description]"
-    def jsonResp = new JsonSlurper().parseText(url.toURL().getText())
-    */
     def jsonResp = this.getJson("offlineCause[description]")
     if(!jsonResp.offlineCause) { return null }
     jsonResp.offlineCause.description
@@ -58,40 +49,11 @@ class JenkinsSlave {
 
   boolean isBuilding() {
     this.getJson("executors[idle]").idle
-    /*
-    String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=executors[idle]"
-    def jsonResp = new JsonSlurper().parseText(url.toURL().getText())
-    jsonResp.idle
-    */
   }
 
-  // have to try it, but will make the two methods smaller!
   def getJson(String query) {
     String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=${query}"
     new JsonSlurper().parseText(url.toURL().getText())
   }
-
-  /* probably not needed!
-  // setter methods
-  void sethostUrl(String host) {
-    this.hostUrl = host
-  }
-
-  void setJnlpUrl(String jnlpUrl) {
-    this.jnlpUrl = jnlpUrl
-  }
-
-  void setname(String serial) {
-    this.serial = serial
-  }
-
-  void setSecret(String secret) {
-    this.secret = secret
-  }
-
-  void setSerial(String serial) {
-    this.serial = serial
-  }
-  */
 
 }
