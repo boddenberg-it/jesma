@@ -6,7 +6,6 @@ class JenkinsSlave {
   String hostUrl  // config (setup jsm_host)
   String name     // userContent (dynamically via Jenkins job)
   String secret   // userContent (dynamically via Jenkins job)
-  String serial   // adb
 
   private UNIXProcess process
 
