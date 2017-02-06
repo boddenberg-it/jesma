@@ -6,7 +6,6 @@ class JenkinsSlave {
   String hostUrl  // config (setup jsm_host)
   String name     // userContent (dynamically via Jenkins job)
   String secret   // userContent (dynamically via Jenkins job)
-  String serial   // adb
 
   private UNIXProcess process
 
@@ -16,10 +15,10 @@ class JenkinsSlave {
 
     Date date = new Date().format('yyyy-MM-dd_hh:mm:ss')
 
-    this.process = """
+    this.process = """\
       java -Dhudson.remoting.Launcher.pingIntervalSec=-1
         -jar slave.jar
-        -slaveLog ./logs/slaves/${date}_${this.name}.${this.serial}.log
+        -slaveLog ./logs/slaves/${date}_${this.name}.log
         -jnlpUrl "${this.hostUrl}/computer/${this.name}/slave-agent.jnlp
         -secret ${this.secret}
     """.stripIndent().execute()
@@ -34,11 +33,9 @@ class JenkinsSlave {
     !this.isOnline()
   }
 
-  // is'es methods
   boolean isOnline() {
     this.getJson("offline").offline
   }
-
 
   // returns null (as String) or the reason why user disconnected slave
   String isManuallyDisconnected() {
@@ -51,7 +48,7 @@ class JenkinsSlave {
     this.getJson("executors[idle]").idle
   }
 
-  def getJson(String query) {
+  private JsonSlurper getJson(String query) {
     String url = "${this.hostUrl}/computer/${this.name}/api/json?tree=${query}"
     new JsonSlurper().parseText(url.toURL().getText())
   }
