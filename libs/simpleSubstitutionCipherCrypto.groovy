@@ -20,12 +20,10 @@ def putSalt(encrypted, cipher) {
     def parts = getPartsBySaltPositions(encrypted,
                     getSaltPositionByCipher(cipher))
 
-    Random rng = new Random();
-
-    parts[0] + cipher.charAt(rng.nextInt(16)) +
-    parts[1] + cipher.charAt(rng.nextInt(16)) +
-    parts[2] + cipher.charAt(rng.nextInt(16)) +
-    parts[3] + cipher.charAt(rng.nextInt(16)) +
+    parts[0] + encrypted.charAt(2) +
+    parts[1] + encrypted.charAt(4) +
+    parts[2] + encrypted.charAt(16) +
+    parts[3] + encrypted.charAt(32) +
     parts[4]
 }
 
