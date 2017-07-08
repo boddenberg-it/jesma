@@ -17,13 +17,9 @@ class AndroidDevice {
     adbShell("settings get global airplane_mode_on").equals("1")
   }
 
-  boolean isCharging(){
-    String output = adbShell("cat /sys/class/power_supply/battery/status")
-    output.equals("Charging") || output.equals("Full")
-  }
-
   boolean isDeviceUsable(String serial) {
-  "adb devices".execute().text.split("${this.serial}\t")[1].trim().equals("device")
+    "adb devices".execute().text.split("${this.serial}\t")[1]
+      .trim().equals("device")
   }
 
   boolean isWiFiConnected() {
@@ -53,12 +49,8 @@ class AndroidDevice {
       adbShell("dumpsys power") // add something like "grep Display Power"
   }
 
-  void tooglePowerSupply() {
-
+  List ping(String address) {
+      pingOutput = adbShell(" ping -c 5 ${address}").split('\n')
   }
 
-  List ping(String address) {
-      List pingOutput = adbShell(" ping -c 5 ${address}").split('\n')
-      true
-    }
 }

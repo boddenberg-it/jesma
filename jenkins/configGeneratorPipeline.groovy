@@ -1,22 +1,40 @@
-String configJson = "{ \"jsm_clients\": [\n"
+/* JSM configuration updater */
+def savedConfig = getConfig().trim()
+def latestConfig = createConfig().trim()
 
-//Node node = jenkins.model.Jenkins.instance.slaves.find { it.name == "jsmc_testSlave" }
-
-for ( node in jenkins.model.Jenkins.instance.slaves) {
-
-props = node.nodeProperties.envVars
-
-configJson += """{
-                "name": "${node.name}",
-                "mode": "${node.mode}",
-                "remoteFS":  "${node.remoteFS}",
-                "executors": "${node.numExecutors}",
-                "jnlp_secret": "${node.getComputer().getJnlpMac()}",
-		"adb_serial": "${props.ANDROID_SERIAL[0]}",
-                "jsmc_json": ${props.jsmc_json[0]}
-              },""".stripIndent()
+if (!savedConfig.equals(latestConfig)) {
+  log.info("[INFO] JSM configuration file has been updated")
+  updateConfig(latestConfig)
 }
-// close JSON
-configJson = configJson.substring(0, configJson.lastIndexOf(','))
-configJson += "\n]}"
-println configJson
+
+// functions
+String createConfig() {
+  String configJson = "{ \"jsm_clients\": "
+
+	hudson.model.Hudson.instance.slaves.each() {
+
+		configJson += """{
+                "name": "${it.name}",
+                "mode": "${it.mode}",
+                "remoteFS":  "${it.remoteFS}",
+                "executors": "${it.numExecutors}",
+                "jnlp_secret": "${it.getComputer().getJnlpMac()}",
+                "jsmc_json": ${it.nodeProperties.envVars.jsmc_json[0]}
+        },""".stripIndent()
+  }
+  configJson = configJson.substring(0, (configJson.length() - 1)) + "}"
+}
+
+void updateConfig(String config) {
+  def printWriter = new PrintWriter("/var/jenkins_home/userContent/jsmConfig.json")
+	printWriter.println(config)
+	printWriter.close()
+}
+
+String getConfig(){
+  String fileContents = new File('/var/jenkins_home/userContent/jsmConfig.json').text
+}
+
+String encrypt(String input) {
+  input.tbc...
+}

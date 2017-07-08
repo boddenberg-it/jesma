@@ -1,5 +1,14 @@
 // a simple substitution cipher for hex values
-def encrypt(plain, cipher, hexAlphabet) {
+
+public String encryptJnlpSecret(secret, cipher, salt) {
+  putSalt(encrypt(secret, cipher), cipher, salt)
+}
+
+public String decryptJnlpSecret(encrypted, cipher, salt) {
+  decrypt(removeSalt(encrypted, cipher, salt), cipher)
+}
+
+private String encrypt(plain, cipher, hexAlphabet = "0123456789abcdef") {
 
     encrypted = ""
 
@@ -10,49 +19,47 @@ def encrypt(plain, cipher, hexAlphabet) {
     encrypted
 }
 
-def decrypt(secret, cipher, hexAlphabet) {
-    encrypt(secret, hexAlphabet, cipher)
+private decrypt(encrypted, cipher) {
+    encrypt(encrypted, "0123456789abcdef", cipher)
 }
 
 // Salt to avoid exposing pattern of secret
-def putSalt(encrypted, cipher) {
+private putSalt(encrypted, cipher, salt) {
 
-    def parts = getPartsBySaltPositions(encrypted,
-                    getSaltPositionByCipher(cipher))
+    parts = getPartsBySaltPositions(encrypted,
+                    getSaltPositions(encrypted.substring(48,64) + cipher, salt))
 
-    parts[0] + encrypted.charAt(2) +
-    parts[1] + encrypted.charAt(4) +
-    parts[2] + encrypted.charAt(16) +
-    parts[3] + encrypted.charAt(32) +
+    parts[0] + encrypted.charAt(4) +
+    parts[1] + encrypted.charAt(16) +
+    parts[2] + encrypted.charAt(32) +
+    parts[3] + encrypted.charAt(63) +
     parts[4]
 }
 
-def removeSalt(encrypted, cipher) {
+private removeSalt(encrypted, cipher, salt) {
 
-  positions = getSaltPositionByCipher(cipher)
+  positions = getSaltPositions(encrypted.substring(52,68) + cipher, salt)
 
   encrypted.substring(0, positions[0]) +
-  encrypted.substring(positions[0] , positions[1]) +
-  encrypted.substring(positions[1] , positions[2]) +
-  encrypted.substring(positions[2] , positions[3]) +
-  encrypted.substring(positions[3] , encrypted.length())
+  encrypted.substring(positions[0] + 1 , positions[1] + 1) +
+  encrypted.substring(positions[1] + 2 , positions[2] + 2) +
+  encrypted.substring(positions[2] + 3 , positions[3] + 3) +
+  encrypted.substring(positions[3] + 4 , encrypted.length())
 }
 
 // SaltHelper
-def getSaltPositionByCipher(cipher) {
+private getSaltPositions(cipher, salt) {
 
-  positions = [ cipher.indexOf("e"),
-                cipher.indexOf("4") * 2,
-                cipher.indexOf("f") * 3,
-                cipher.indexOf("0") * 4 ]
+  positions = []
 
-  // to avoid adding saltChar at beginning of string
-  if (positions[0]) { positions[0] = 1}
+  (0..3).each() {
+      positions << (int) Math.round(cipher.indexOf(salt[it]) * 1.5)
+  }
 
-  positions
+  positions.sort()
 }
 
-def getPartsBySaltPositions(encrypted, positions) {
+private getPartsBySaltPositions(encrypted, positions) {
 
   [ encrypted.substring(0, positions[0]),
     encrypted.substring(positions[0], positions[1]),
@@ -61,28 +68,90 @@ def getPartsBySaltPositions(encrypted, positions) {
     encrypted.substring(positions[3], encrypted.length()) ]
 }
 
-// internal test
 
-def plain = "8cac5581c7cdb869915472bcda5577a7b2497499c5dbafb4d36552131ffa367c"
-def cipher = "eb8a629347fc51d0"
-def hexAlphabet = "0123456789abcdef"
+/* INTERNAL TESTING */
 
-def encrypted = encrypt(plain, cipher, hexAlphabet)
-def decrypted = decrypt(encrypted, cipher, hexAlphabet)
+// check avoiding of adding salt at the beginning of the string
+test(getRandomHex(), "eb8a629347fc51d0", getRandomSalt())
+// generic test(s)
+(1..25).each() { test(getRandomHex(), "eb8a629347fc51d0", "4907") }
 
-def salted = putSalt(encrypted, cipher)
-def unSalted = removeSalt(encrypted, cipher)
-def decryptedFromSalt = decrypt(unSalted, cipher, hexAlphabet)
 
-// debugging
-println "------- substitution cipher --------"
-println plain
-println decrypted
-println encrypted
-println "---------- with salt now -----------"
-println salted
-println unSalted
-println "------ decrypted the unsalted ------"
-println plain
-println decryptedFromSalt
-println "--------------- Ente ---------------"
+// TODO: break down test method in three ones
+def test(plain, cipher, salt) {
+  // testing substition ciphering (encrypt() decrypt() methods)
+  def encrypted = encrypt(plain, cipher)
+  def encrypted1 = encrypt(plain, cipher)
+  def encrypted2 = encrypt(plain, cipher)
+  def decrypted = decrypt(encrypted, cipher)
+
+  println "\n------------ test simpleSubstitutionCipherCrypto.groovy --------\n"
+  println "plain:       " + plain
+  println "decrypted:   " + decrypted
+  println "encrypted:   " + encrypted
+
+  assert decrypted.equals(plain)
+  assert !encrypted.equals(plain)
+  assert encrypted.length() == plain.length()
+  assert encrypted.equals(encrypted2) && encrypted1.equals(encrypted2)
+
+  // testing salting
+  def salted = putSalt(encrypted, cipher, salt)
+  def salted1 = putSalt(encrypted, cipher, salt)
+  def salted2 = putSalt(encrypted, cipher, salt)
+  def unsalted = removeSalt(salted, cipher, salt)
+  def decryptedFromSalt = decrypt(unsalted, cipher)
+
+  println "\n------------ decrypted the unsalted\n"
+  println "plain:       " + plain
+  println "saltDecrypt: " + decryptedFromSalt
+  println "salted:      " + salted
+  println "unsalted:    " + unsalted
+
+  assert plain.equals(decryptedFromSalt)
+  assert unsalted.equals(encrypted)
+  assert salted.length() == encrypted.length() + 4
+  assert !salted.contains(encrypted)
+  assert !salted.equals(unsalted) && !salted.equals(encrypted)
+  assert salted.equals(salted2) && salted1.equals(salted2)
+
+  // testing public methods encryptedJnlp() and decryptedJnlp()
+  def encryptedJnlp = encryptJnlpSecret(plain, cipher, salt)
+  def decryptedJnlp = decryptJnlpSecret(encryptedJnlp, cipher, salt)
+
+  println "\n------------ de/encrypt jnlp public methods\n"
+  println "encryptJnlp: " + encryptedJnlp
+  println "decryptJnlp: " + decryptedJnlp
+  println "plain:       " + plain
+
+  assert decryptedJnlp.equals(plain)
+  assert encryptedJnlp.length() == decryptedJnlp.length() + 4
+  assert !encryptedJnlp.contains(encrypted)
+
+  println "\n------------- end of substitution cipher test ------------------\n"
+}
+
+// test helper functions
+def getRandomHex(length = 64){
+
+  hexAlphabet = "0123456789abcdef"
+  hexAlphabet_length = hexAlphabet.length()
+
+  random = new Random()
+  randomHex = ""
+
+  (1..length).each {
+    rand = random.nextInt(hexAlphabet_length)
+    randomHex += hexAlphabet.charAt(rand)
+  }
+
+  randomHex
+}
+
+def getRandomCipher() {
+    getRandomHex(1024).toList().unique().join()
+}
+
+def getRandomSalt() {
+    getRandomCipher().substring(0,4).toList()
+}

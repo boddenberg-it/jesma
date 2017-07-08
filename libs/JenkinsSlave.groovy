@@ -10,16 +10,15 @@ class JenkinsSlave {
   private UNIXProcess process
 
   boolean start() {
-    // sanity check whether log dir is accessible
-    //assertTrue new File(./slaveLogs).isAccessible()
+    // maybe move to other class where the sanity is checkd...
+    assertTrue new File(./slaveLogs).isAccessible()
 
     Date date = new Date().format('yyyy-MM-dd_hh:mm:ss')
 
-    this.process = """\
-      java -Dhudson.remoting.Launcher.pingIntervalSec=-1
-        -jar slave.jar
-        -slaveLog ./logs/slaves/${date}_${this.name}.log
-        -jnlpUrl "${this.hostUrl}/computer/${this.name}/slave-agent.jnlp
+    this.process = """java -Dhudson.remoting.Launcher.pingIntervalSec=-1 \
+        -jar slave.jar \
+        -slaveLog ./logs/slaves/${date}_${this.name}.log \
+        -jnlpUrl "${this.hostUrl}/computer/${this.name}/slave-agent.jnlp \
         -secret ${this.secret}
     """.stripIndent().execute()
 
